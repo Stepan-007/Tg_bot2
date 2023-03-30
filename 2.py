@@ -1,12 +1,14 @@
 # Импортируем необходимые классы.
 import logging
-import random
 from datetime import datetime
 from random import sample
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+
 from list_words import get_list_words
+from word_class import Word
+from kkeyboard import create_keyboard
 
 WORDS = get_list_words()  ### Получаем список слов с которыми будет работать
 
@@ -52,15 +54,23 @@ async def start_training(update, context: ContextTypes.DEFAULT_TYPE):
     """Добавляем задачу в очередь"""
     chat_id = update.effective_message.chat_id
     try:
-        # args[0] should contain the time for the timer in seconds
         due = int(context.args[0])
         if due <= 0:
             await update.effective_message.reply_text("Тренировка не может проходить без слов")
             return
-        reply_keyboard = [sample(WORDS, due)]
-        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        elif due > 20:
+            await update.effective_message.reply_text("Выбрано больше 20 слов для тренировки :(")
+            return
         text = 'Тренировка началась'
-        await update.effective_message.reply_text(text, reply_markup=markup)
+        await update.effective_message.reply_text(text)
+        words = sample(WORDS, due)
+        for i in range(due):
+            text = f'Поставьте ударение в слове "{words[i].lower().capitalize()}"'
+            await update.effective_message.reply_text(text)
+            word = Word(words[i])
+            all_variants = word.get_all_variants()
+            keyboard_variants = create_keyboard(all_variants)
+            print(keyboard_variants)
 
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Вы не ввели параметр таймера. Попробуйте еще раз")
