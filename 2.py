@@ -73,7 +73,7 @@ async def start_training(update, context: ContextTypes.DEFAULT_TYPE):
             print(keyboard_variants)
 
     except (IndexError, ValueError):
-        await update.effective_message.reply_text("Вы не ввели параметр таймера. Попробуйте еще раз")
+        await update.effective_message.reply_text("Вы не ввели количество слов. Попробуйте еще раз")
 
 
 async def help(update, context):
@@ -124,7 +124,7 @@ async def close_keyboard(update, context):
 def main():
     # Создаём объект Application.
     # Вместо слова "TOKEN" надо разместить полученный от @BotFather токен
-    application = Application.builder().token('5922594006:AAEmSgUMEcYYl7IO0qGr_RvaLYsoWDwoUY4').build()
+    application = Application.builder().token('5978327632:AAE6QR6oxcw9H7Vruw7vRuJe7_EIugmpPGw').build()
 
     # Создаём обработчик сообщений типа filters.TEXT
     # из описанной выше асинхронной функции echo()
