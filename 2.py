@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime
 from random import sample
-from telegram.ext import Application, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
@@ -66,14 +66,30 @@ async def start_training(update, context: ContextTypes.DEFAULT_TYPE):
         words = sample(WORDS, due)
         for i in range(due):
             text = f'Поставьте ударение в слове "{words[i].lower().capitalize()}"'
-            await update.effective_message.reply_text(text)
             word = Word(words[i])
             all_variants = word.get_all_variants()
             keyboard_variants = create_keyboard(all_variants)
-            print(keyboard_variants)
+            markup = ReplyKeyboardMarkup(keyboard_variants, one_time_keyboard=True)
+            await update.message.reply_text(text, reply_markup=markup)
 
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Вы не ввели количество слов. Попробуйте еще раз")
+
+
+async def button(update, _):
+    query = update.callback_query
+    variant = query.data
+
+    # `CallbackQueries` требует ответа, даже если
+    # уведомление для пользователя не требуется, в противном
+    #  случае у некоторых клиентов могут возникнуть проблемы.
+    # смотри https://core.telegram.org/bots/api#callbackquery.
+    # для версии 20.x необходимо использовать оператор await
+    answer = query.answer()
+
+    # редактируем сообщение, тем самым кнопки
+    # в чате заменятся на этот ответ.
+    # для версии 20.x необходимо использовать оператор await
 
 
 async def help(update, context):
@@ -88,11 +104,6 @@ def help_command():
 /phone - поможет позвонить админам и пожаловаться на проект :)
 /play - запустит вам игру Ударялка'''
 
-
-# Зарегистрируем их в приложении перед
-# регистрацией обработчика текстовых сообщений.
-# Первым параметром конструктора CommandHandler я
-# вляется название команды.
 
 async def admin(update, contest):
     await update.message.reply_text(f'Это проект Анкудинова Степана и Дудича Михаила')
@@ -142,7 +153,7 @@ def main():
     application.add_handler(CommandHandler("work_time", work_time))
     application.add_handler(CommandHandler("help", help))
     application.add_handler(CommandHandler("close", close_keyboard))
-    # Запускаем приложение.
+    application.add_handler(CallbackQueryHandler(button))
     application.run_polling()
 
 
