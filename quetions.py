@@ -14,7 +14,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 WORDS = get_list_words()
 
 
@@ -23,33 +22,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Введите команду /quiz для того, чтобы поставить ударение в случайном слове"
     )
-
-
-async def receive_poll_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Summarize a users poll vote"""
-    answer = update.poll_answer
-    answered_poll = context.bot_data[answer.poll_id]
-    try:
-        questions = answered_poll["questions"]
-    # this means this poll answer update is from an old poll, we can't do our answering then
-    except KeyError:
-        return
-    selected_options = answer.option_ids
-    answer_string = ""
-    for question_id in selected_options:
-        if question_id != selected_options[-1]:
-            answer_string += questions[question_id] + " and "
-        else:
-            answer_string += questions[question_id]
-    await context.bot.send_message(
-        answered_poll["chat_id"],
-        f"{update.effective_user.mention_html()} feels {answer_string}!",
-        parse_mode=ParseMode.HTML,
-    )
-    answered_poll["answers"] += 1
-    # Close poll after three participants voted
-    if answered_poll["answers"] == 3:
-        await context.bot.stop_poll(answered_poll["chat_id"], answered_poll["message_id"])
 
 
 async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -84,13 +56,15 @@ async def receive_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Display a help message"""
-    await update.message.reply_text("Use /quiz, /poll or /preview to test this bot.")
+    await update.message.reply_text("/quiz - команда, при введении которой открывается " \
+                                    "возможность поставить ударение в слове")
 
 
 def main() -> None:
     """Run bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("6260730894:AAGwAXctln7jY9cQPEx-X6RZSqOQDqFKX_Y").build()
+    application = Application.builder().token(
+        "6260730894:AAGwAXctln7jY9cQPEx-X6RZSqOQDqFKX_Y").build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("quiz", quiz))
     application.add_handler(CommandHandler("help", help_handler))
