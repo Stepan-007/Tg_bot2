@@ -31,7 +31,8 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = await update.effective_message.reply_poll(
         f'Поставьте ударение в слове "{word.get_right_variant().lower().capitalize()}"',
         questions, type=Poll.QUIZ,
-        correct_option_id=questions.index(word.get_right_variant())
+        correct_option_id=questions.index(word.get_right_variant()),
+        explanation=f'Правильный ответ: {word.get_right_variant()}'
     )
     # Save some info about the poll the bot_data for later use in receive_quiz_answer
     payload = {
