@@ -19,7 +19,7 @@ WORDS = get_list_words()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Inform user about what this bot can do"""
-    await update.message.reply_text(help_command())
+    await update.message.reply_text(f"Привет, я бот Ударялка, созданный для тренировка правил ударения \n {help_command()}")
 
 
 def help_command():
@@ -28,7 +28,8 @@ def help_command():
 /work_time - укажет время работы нашего бота.
 /address - поможет узнать адрес нашего офиса.
 /phone - поможет позвонить админам и пожаловаться на проект :)
-/work - команда, при введении которой открывается возможность поставить ударение в слове"'''
+/quiz - команда, при введении которой открывается возможность поставить ударение в слове
+/help - команда для знакомства с функционалом бота'''
 
 
 async def admin(update, contest):
@@ -68,6 +69,10 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.bot_data.update(payload)
 
 
+async def help_commands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(help_command())
+
+
 async def receive_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Close quiz after three participants took it"""
     # the bot can receive closed poll updates we don't care about
@@ -88,8 +93,9 @@ def main() -> None:
     application = Application.builder().token(
         "6260730894:AAGwAXctln7jY9cQPEx-X6RZSqOQDqFKX_Y").build()
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("work", quiz))
+    application.add_handler(CommandHandler("quiz", quiz))
     application.add_handler(CommandHandler("admin", admin))
+    application.add_handler(CommandHandler("help", help_commands))
     application.add_handler(CommandHandler("address", address))
     application.add_handler(CommandHandler("phone", phone))
     application.add_handler(CommandHandler("work_time", work_time))
