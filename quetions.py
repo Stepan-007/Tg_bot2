@@ -5,6 +5,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, PollHandler
 
 from random import choice
 import sqlite3
+from pymorphy2 import MorphAnalyzer
 
 from list_words import get_list_words
 from word_class import Word
@@ -92,17 +93,73 @@ async def receive_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE
         await context.bot.stop_poll(quiz_data["chat_id"], quiz_data["message_id"])
 
 
+async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    args = context.args
+    word = args[0]
+
+    RUSSIAN_ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+    VOWELS = 'А, Е, И, О, У, Ы, Э, Ю, Я'.split(', ')
+
+    con = sqlite3.connect('db/words_tgbot.db')
+    cur = con.cursor()
+    user_words = list(map(lambda row: row[0], cur.execute(
+        f'select word from MainTable where user_id = {update.effective_user.id}').fetchall()))
+
+    # если пользователь не ввёл слово, которое надо добавить
+    if len(args) == 0:
+        await update.message.reply_text('Вы не ввели слово, которое надо добавить')
+    # если пользователь ввёл сразу несколько слов для добавления
+    elif len(args) > 1:
+        await update.message.reply_text('Добавлять можно только по одному слову за раз')
+    # если слово уже есть в списке
+    elif word in user_words:
+        await update.message.reply_text('Это слово уже есть в списке')
+    # если в слове встречаются символы не из русского алфавита
+    elif not all(map(lambda let: let in RUSSIAN_ALPHABET, word.lower())):
+        await update.message.reply_text(
+            'Необходимо написать слово только буквами русского алфавита без ' \
+            'дополнительных знаков и разделителей')
+    # если в слове нет букв, выделенных верхним регистром (ударной буквы)
+    elif word.lower() == word:
+        await update.message.reply_text('Необходимо выделить верхним регистром букву,' \
+                                        'на которую падает ударение')
+    # если в слове больше одной буквы, выделенной верхним регистром
+    elif len([letter for letter in word if letter.isupper()]) > 1:
+        await update.message.reply_text('Необходимо выделить капсом ОДНУ букву' \
+                                        ', на которую падает ударение')
+    # если выделенная верхним регистром ударная буква оказалась согласной
+    elif [letter for letter in word if letter.isupper()][0] not in VOWELS:
+        await update.message.reply_text('Необходимо выделить капсом ГЛАСНУЮ букву, ' \
+                                        'на которую падает ударение.')
+    # если есть "ё" в слове и оно не выделено как ударное
+    elif 'ё' in word:
+        await update.message.reply_text('Ошибка. Буква "ё" всегда ударная')
+    # если слова не существует
+    elif str(MorphAnalyzer().parse(word)[0].methods_stack[0][0]) == 'FakeDictionary()':
+        await update.message.reply_text(
+            'Скорее всего, такого слова не существует. Попробуйте другое')
+    # если в слове одна гласная
+    elif sum([word.lower().count(vowel.lower()) for vowel in VOWELS]) == 1:
+        await update.message.reply_text('В этом слове одна гласная, она же и будет ударной. ' \
+                                        'Нет смысла добавлять такое слово')
+    else:
+        # добавляем слово в список. Если в слове есть буква "Ё", меняем её на "Е"
+        await update.message.reply_text('Слово будет успешно добавлено, когда Миша сделает так, чтобы слово добавлялось в БД')
+
+
 def main() -> None:
     """Run bot."""
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(
         "6260730894:AAGwAXctln7jY9cQPEx-X6RZSqOQDqFKX_Y").build()
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("quiz", quiz))
     application.add_handler(CommandHandler("admin", admin))
     application.add_handler(CommandHandler("address", address))
     application.add_handler(CommandHandler("phone", phone))
     application.add_handler(CommandHandler("work_time", work_time))
+    application.add_handler(CommandHandler("add", add))
     application.add_handler(PollHandler(receive_quiz_answer))
 
     application.run_polling()
