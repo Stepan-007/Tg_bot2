@@ -28,7 +28,7 @@ def help_command():
 /work_time - укажет время работы нашего бота.
 /address - поможет узнать адрес нашего офиса.
 /phone - поможет позвонить админам и пожаловаться на проект :)
-/work - команда, при введении которой открывается возможность поставить ударение в слове"'''
+/quiz - команда, при введении которой открывается возможность поставить ударение в слове"'''
 
 
 async def admin(update, contest):
@@ -88,14 +88,13 @@ def main() -> None:
     application = Application.builder().token(
         "6260730894:AAGwAXctln7jY9cQPEx-X6RZSqOQDqFKX_Y").build()
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("work", quiz))
+    application.add_handler(CommandHandler("quiz", quiz))
     application.add_handler(CommandHandler("admin", admin))
     application.add_handler(CommandHandler("address", address))
     application.add_handler(CommandHandler("phone", phone))
     application.add_handler(CommandHandler("work_time", work_time))
     application.add_handler(PollHandler(receive_quiz_answer))
 
-    # Run the bot until the user presses Ctrl-C
     application.run_polling()
 
 
