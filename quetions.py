@@ -1,10 +1,10 @@
 import logging
 
 from telegram import Poll, Update
-from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, PollHandler
 
 from random import choice
+import sqlite3
 
 from list_words import get_list_words
 from word_class import Word
@@ -20,6 +20,15 @@ WORDS = get_list_words()
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Inform user about what this bot can do"""
     await update.message.reply_text(help_command())
+    con = sqlite3.connect('db/words_tgbot.db')
+    cur = con.cursor()
+    res = cur.execute(
+        f'select * from MainTable where user_id = {update.effective_user.id}').fetchall()
+    if len(res) == 0:
+        for word in WORDS:
+            cur.execute(
+                f'insert into MainTable(user_id, word) values({update.effective_user.id}, "{word}")')
+        con.commit()
 
 
 def help_command():
@@ -66,6 +75,7 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         message.poll.id: {"chat_id": update.effective_chat.id, "message_id": message.message_id}
     }
     context.bot_data.update(payload)
+    print(update.effective_user.id)
 
 
 async def receive_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
